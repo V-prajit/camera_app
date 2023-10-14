@@ -17,14 +17,10 @@ app.bind('<Escape>', lambda e: app.quit())
 vid_src = Label(app)
 vid_src.pack()
 
-<<<<<<< Updated upstream
-global recording_state
-=======
 frame_count_label = Label(app, text="Frame: 0")
 frame_count_label.pack()
 
 global recording_state, paused
->>>>>>> Stashed changes
 recording_state = False
 paused = False
 out = None
@@ -47,22 +43,6 @@ def open_camera():
     vid_src.after(1000 // framerate, open_camera)  # Use the specified frame rate for capturing frames
 
 def play_video():
-<<<<<<< Updated upstream
-    cap = cv2.VideoCapture('outpy.avi')
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        cv2.imshow('Recorded Video', frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-=======
     global paused
     frame_count = 0
     cap = cv2.VideoCapture('outpy.avi')
@@ -90,7 +70,6 @@ def play_video():
 def pause_resume_video():
     global paused
     paused = not paused
->>>>>>> Stashed changes
 
 # state of the recording button, and having it start and stop writing to a file
 def toggle_recording():
@@ -104,17 +83,11 @@ def toggle_recording():
 rec_button = Button(app, text='Start Recording', command=toggle_recording)
 rec_button.pack()
 
-<<<<<<< Updated upstream
-play_button = Button(app, text='Play Recorded Video', command=play_video)
-play_button.pack()
-
-=======
 play_button = Button(app, text='Play Recorded Video', command=lambda: threading.Thread(target=play_video).start())
 play_button.pack()
 
 pause_resume_button = Button(app, text='Pause/Resume Video', command=pause_resume_video)
 pause_resume_button.pack()
 
->>>>>>> Stashed changes
 app.after(1, open_camera)
 app.mainloop()
