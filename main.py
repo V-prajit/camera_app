@@ -37,6 +37,22 @@ def open_camera():
         out.write(frame)
     vid_src.after(10, open_camera)
 
+def play_video():
+    cap = cv2.VideoCapture('outpy.avi')
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        cv2.imshow('Recorded Video', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
 # state of the recording button, and having it start and stop writing to a file
 def toggle_recording():
     global recording_state
@@ -48,6 +64,9 @@ def toggle_recording():
 
 rec_button = Button(app, text='Start Recording', command=toggle_recording)
 rec_button.pack()
+
+play_button = Button(app, text='Play Recorded Video', command=play_video)
+play_button.pack()
 
 app.after(1, open_camera)
 app.mainloop()
