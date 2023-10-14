@@ -1,12 +1,13 @@
 from tkinter import *
 import cv2
 from PIL import Image, ImageTk
+import threading
 
 # set the camera and its values up
 cam = cv2.VideoCapture(0)
 frame_width = int(cam.get(3))
 frame_height = int(cam.get(4))
-framerate = int(cam.get(5))
+framerate = 60  # Set the frame rate for recording and playback (in frames per second)
 
 # setting the base window
 app = Tk()
@@ -16,14 +17,22 @@ app.bind('<Escape>', lambda e: app.quit())
 vid_src = Label(app)
 vid_src.pack()
 
+<<<<<<< Updated upstream
 global recording_state
+=======
+frame_count_label = Label(app, text="Frame: 0")
+frame_count_label.pack()
+
+global recording_state, paused
+>>>>>>> Stashed changes
 recording_state = False
+paused = False
 out = None
 
 # functions to perform actions
 # open the camera preview upon opening the application
 def open_camera():
-    global recording_state, out
+    global recording_state, out, paused
     _, frame = cam.read()
     c_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     cur_frame = Image.fromarray(c_image)
@@ -31,13 +40,14 @@ def open_camera():
     vid_src.photo_image = photo_cur_frame
     vid_src.configure(image=photo_cur_frame)
 
-    if recording_state:
+    if recording_state and not paused:
         if out is None:
             out = cv2.VideoWriter('outpy.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), framerate, (frame_width, frame_height))
         out.write(frame)
-    vid_src.after(10, open_camera)
+    vid_src.after(1000 // framerate, open_camera)  # Use the specified frame rate for capturing frames
 
 def play_video():
+<<<<<<< Updated upstream
     cap = cv2.VideoCapture('outpy.avi')
 
     while True:
@@ -52,6 +62,35 @@ def play_video():
 
     cap.release()
     cv2.destroyAllWindows()
+=======
+    global paused
+    frame_count = 0
+    cap = cv2.VideoCapture('outpy.avi')
+
+    while True:
+        if not paused:
+            ret, frame = cap.read()
+            frame_count += 1
+            if not ret:
+                break
+        
+        cv2.imshow('Recorded Video', frame)
+
+        # Use the specified frame rate for displaying frames
+        # This waitKey value determines the playback speed
+        # Adjust the waitKey value to match the desired playback speed
+        if cv2.waitKey(1000 // framerate) & 0xFF == ord('q'):  
+            break
+
+        frame_count_label.config(text="Frame: {}".format(frame_count))
+        
+    cap.release()
+    cv2.destroyAllWindows()
+
+def pause_resume_video():
+    global paused
+    paused = not paused
+>>>>>>> Stashed changes
 
 # state of the recording button, and having it start and stop writing to a file
 def toggle_recording():
@@ -65,8 +104,17 @@ def toggle_recording():
 rec_button = Button(app, text='Start Recording', command=toggle_recording)
 rec_button.pack()
 
+<<<<<<< Updated upstream
 play_button = Button(app, text='Play Recorded Video', command=play_video)
 play_button.pack()
 
+=======
+play_button = Button(app, text='Play Recorded Video', command=lambda: threading.Thread(target=play_video).start())
+play_button.pack()
+
+pause_resume_button = Button(app, text='Pause/Resume Video', command=pause_resume_video)
+pause_resume_button.pack()
+
+>>>>>>> Stashed changes
 app.after(1, open_camera)
 app.mainloop()
