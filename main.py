@@ -88,6 +88,6 @@ play_button.pack()
 
 pause_resume_button = Button(app, text='Pause/Resume Video', command=pause_resume_video)
 pause_resume_button.pack()
-
+#random comment 
 app.after(1, open_camera)
 app.mainloop()
