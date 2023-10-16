@@ -30,6 +30,7 @@ out = None
 def open_camera():
     global recording_state, out, paused
     _, frame = cam.read()
+    frame = cv2.resize(frame, (1280, 720))
     c_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     cur_frame = Image.fromarray(c_image)
     photo_cur_frame = ImageTk.PhotoImage(image=cur_frame)
