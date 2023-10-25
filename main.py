@@ -20,6 +20,9 @@ vid_src.pack()
 frame_count_label = Label(app, text="Frame: 0")
 frame_count_label.pack()
 
+rgb_label = Label(app, text = "RGB: ")
+rgb_label.pack()
+
 global recording_state, paused
 recording_state = False
 paused = False
@@ -30,12 +33,15 @@ out = None
 def open_camera():
     global recording_state, out, paused
     _, frame = cam.read()
-    frame = cv2.resize(frame, (1280, 720))
+    frame = cv2.resize(frame, (frame_width, frame_height))
+
     c_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     cur_frame = Image.fromarray(c_image)
     photo_cur_frame = ImageTk.PhotoImage(image=cur_frame)
     vid_src.photo_image = photo_cur_frame
     vid_src.configure(image=photo_cur_frame)
+
+    vid_src.bind("<Motion>", get_rgb_values)
 
     if recording_state and not paused:
         if out is None:
@@ -43,8 +49,15 @@ def open_camera():
         out.write(frame)
     vid_src.after(1000 // framerate, open_camera)  # Use the specified frame rate for capturing frames
 
+def get_rgb_values(event):
+    x, y = event.x, event.y  # Get the coordinates of the mouse cursor
+    frame = cv2.cvtColor(cam.read()[1], cv2.COLOR_BGR2RGB)  # Read the current frame
+    rgb = frame[y, x]  # Get the RGB values at the cursor position
+    rgb_label.config(text="RGB: {}".format(rgb))
+
 def play_video():
     global paused
+    global frame_count, cap
     frame_count = 0
     cap = cv2.VideoCapture('outpy.avi')
 
@@ -72,6 +85,16 @@ def pause_resume_video():
     global paused
     paused = not paused
 
+def next_frame():
+    global current_frame
+    frame_count += 1
+    cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)  
+
+def prev_frame():
+    global current_frame
+    frame_count -= 1
+    cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
+
 # state of the recording button, and having it start and stop writing to a file
 def toggle_recording():
     global recording_state
@@ -89,6 +112,13 @@ play_button.pack()
 
 pause_resume_button = Button(app, text='Pause/Resume Video', command=pause_resume_video)
 pause_resume_button.pack()
+
+forward_button = Button(app, text='Move Forward', command= next_frame)
+forward_button.pack()
+
+backward_button = Button(app, text='Move Backward', command= prev_frame)
+backward_button.pack()
+
 #random comment 
 app.after(1, open_camera)
 app.mainloop()
