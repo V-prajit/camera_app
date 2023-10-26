@@ -55,28 +55,36 @@ def get_rgb_values(event):
     rgb = frame[y, x]  # Get the RGB values at the cursor position
     rgb_label.config(text="RGB: {}".format(rgb))
 
+next_or_prev_frame = None  # New global variable to track the operation
+
+
 def play_video():
-    global paused
-    global frame_count, cap
-    frame_count = 0
+    global paused, next_or_prev_frame
+    global cap, current_frame
+    current_frame = 0
     cap = cv2.VideoCapture('outpy.avi')
 
     while True:
-        if not paused:
+        if not paused or (paused and next_or_prev_frame is not None):
+            if next_or_prev_frame == "next":
+                current_frame += 1
+            elif next_or_prev_frame == "prev" and current_frame >0:
+                current_frame -= 1
+
+            cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
             ret, frame = cap.read()
-            frame_count += 1
+
             if not ret:
                 break
+
+            frame_count_label.config(text="Frame: {}".format(current_frame))
+
+            next_or_prev_frame = None
         
         cv2.imshow('Recorded Video', frame)
 
-        # Use the specified frame rate for displaying frames
-        # This waitKey value determines the playback speed
-        # Adjust the waitKey value to match the desired playback speed
         if cv2.waitKey(1000 // framerate) & 0xFF == ord('q'):  
             break
-
-        frame_count_label.config(text="Frame: {}".format(frame_count))
         
     cap.release()
     cv2.destroyAllWindows()
@@ -86,14 +94,11 @@ def pause_resume_video():
     paused = not paused
 
 def next_frame():
-    global current_frame
-    frame_count += 1
-    cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)  
-
+    global next_or_prev_frame
+    next_or_prev_frame = "next"
 def prev_frame():
-    global current_frame
-    frame_count -= 1
-    cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
+    global next_or_prev_frame
+    next_or_prev_frame = "prev"
 
 # state of the recording button, and having it start and stop writing to a file
 def toggle_recording():
