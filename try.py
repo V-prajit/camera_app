@@ -2,15 +2,14 @@ from tkinter import *
 import cv2 
 from PIL import Image, ImageTk
 
-# start the tkinter window.
 app = Tk()
-app.bind('<Escape>', lambda e: app.quit()) # bind the escape key to quiting the app.
+app.bind('<Escape>', lambda e: app.quit()) # bind the escape key to quitting the app.
 
 # defining the global values
 cam = cv2.VideoCapture(0)
 cam_width = int(cam.get(3))
 cam_height = int(cam.get(4))
-framerate = 30
+framerate = 60
 frame_counter = 0
 write_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc('M','J','P','G'), framerate, (cam_width, cam_height))
 # defining states for loops and change in functions
@@ -18,18 +17,21 @@ state_of_video = "Preview"
 cur_frame = 0
 recording_state = False
 state_of_playback = False
+is_paused = False
+cap = None
 
 # Label for the Tkinter app 
 video_source = Label(app)
 video_source.pack()
+rgb_label = Label(app, text="RGB: ")
+rgb_label.pack()
 
 # Global variable to hold the PhotoImage object
 display_in_Tkinter = None
-preview_window_id = None
+vid_frame = 0
 
 def preview_window():
-    global display_in_Tkinter, preview_window_id
-    
+    global display_in_Tkinter
     _, frame = cam.read()
 
     convert_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA) 
@@ -42,20 +44,11 @@ def preview_window():
         write_video.write(frame)
 
     # Call the function again after 1 millisecond
-    preview_window_id = app.after(1000 // framerate, preview_window)
+    app.after(1000 // framerate, preview_window)
 
-def play_video():
-    global frame_counter, cam, preview_window_id
-
-    if cam.isOpened():
-        cam.release()
-    if preview_window_id:
-        app.after_cancel(preview_window_id)
-
-    cap = cv2.VideoCapture('output.avi')
-
-    def play_frame():
-        nonlocal cap
+def play_frame():
+    global cap, vid_frame
+    if cap is not None and not is_paused:
         ret, vid_frame = cap.read()
         if ret:
             convert_color_p = cv2.cvtColor(vid_frame, cv2.COLOR_BGR2RGBA) 
@@ -70,12 +63,31 @@ def play_video():
             cap.release()
             recording_button.configure(text="Start Recording")
 
-    # Start playing frames
+def pause_playback():
+    global is_paused
+    is_paused = not is_paused
+    if is_paused:
+        pause_button.configure(text="Resume Playback")
+    else:
+        pause_button.configure(text="Pause Playback")
+        # Resume playing frames if not paused
+        play_frame()
+
+def play_video():
+    global cap, recording_state
+    if cam.isOpened():
+        cam.release()
+
+    cap = cv2.VideoCapture('output.avi')
+    recording_state = False
+    recording_button.configure(text="Start Recording")
     play_frame()
 
-# Rest of your code...
-
-
+def get_rgb_values(event):
+    global vid_frame
+    x, y = event.x, event.y  # Get the coordinates of the mouse cursor
+    rgb = vid_frame[y, x]  # Get the RGB values at the cursor position
+    rgb_label.config(text="RGB: {}".format(rgb))
 
 def toggle_recording():
     global recording_state
@@ -88,10 +100,15 @@ def toggle_recording():
 # Call the preview_window function to start displaying the video
 preview_window()
 
+# UI Buttons
 recording_button = Button(app, text='Start Recording', command=toggle_recording)
 recording_button.pack()
 
-play_button = Button(app, text = 'play Video', command = play_video)
+pause_button = Button(app, text='Pause Playback', command=pause_playback)
+pause_button.pack()
+
+play_button = Button(app, text='Play Video', command=play_video)
 play_button.pack()
+
 # Start the Tkinter main loop
 app.mainloop()
