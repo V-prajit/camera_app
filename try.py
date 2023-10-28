@@ -12,9 +12,7 @@ cam_height = int(cam.get(4))
 framerate = 60
 write_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), framerate, (cam_width, cam_height))
 
-cur_frame = 0
 recording_state = False
-state_of_playback = False
 is_paused = False
 cap = None
 live_preview = True
@@ -22,9 +20,12 @@ vid_frame = None
 frame_cache = []
 
 video_source = Label(app)
-video_source.pack()
-rgb_label = Label(app, text="RGB: ")
-rgb_label.pack()
+video_source.pack(pady=10)
+
+controls_frame = Frame(app)
+controls_frame.pack(pady=10)
+
+rgb_label = Label(app)
 
 def show_frame(frame):
     convert_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
@@ -33,12 +34,56 @@ def show_frame(frame):
     video_source.config(image=imgtk)
     video_source.imgtk = imgtk
 
+def update_rgb_values(x, y):
+    if vid_frame is not None:
+        if 0 <= x < vid_frame.shape[1] and 0 <= y < vid_frame.shape[0]:
+            rgb = vid_frame[y, x]
+            rgb_label.config(text="RGB: {}".format(rgb))
+        else:
+            rgb_label.config(text="RGB: Out of bounds")
+
+def move_frame_forward():
+    global vid_frame, frame_cache
+    if cap is not None and is_paused:
+        ret, vid_frame = cap.read()
+        if ret:
+            frame_cache.append(vid_frame)
+            show_frame(vid_frame)
+        else:
+            reset_to_start()
+
+def move_frame_backward():
+    global vid_frame, frame_cache
+    if frame_cache:
+        vid_frame = frame_cache.pop(-2)  # get the previous frame
+        show_frame(vid_frame)
+        if cap is not None:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, cap.get(cv2.CAP_PROP_POS_FRAMES) - 2)
+    else:
+        print("Reached the beginning of the video")
+
+def reset_to_start():
+    global recording_state, is_paused, live_preview, vid_frame, frame_cache, cap
+    recording_state = False
+    is_paused = False
+    live_preview = True
+    vid_frame = None
+    frame_cache = []
+    rgb_label.pack_forget()
+    controls_frame.pack_forget()
+    recording_button.pack(side=LEFT, padx=5)
+    play_button.pack(side=LEFT, padx=5)
+    if cap is not None:
+        cap.release()
+        cap = None
+
+# Rest of the functions
 def preview_window():
     global live_preview
     _, frame = cam.read()
     show_frame(frame)
 
-    if recording_state and not state_of_playback:
+    if recording_state and not is_paused:
         write_video.write(frame)
 
     app.after(1000 // framerate, preview_window)
@@ -52,8 +97,8 @@ def play_frame():
             show_frame(vid_frame)
             app.after(1000 // framerate, play_frame)
         else:
-            switch_to_recording_controls()
             cap.release()
+            recording_button.config(text="Start Recording")
 
 def pause_playback():
     global is_paused
@@ -74,36 +119,18 @@ def play_video():
     live_preview = False
     frame_cache = []
 
-    # Hide the recording controls
     recording_button.pack_forget()
     play_button.pack_forget()
+    rgb_label.pack()
+    
+    # Pack the video control buttons here
+    pause_button.pack(side=LEFT, padx=5)
+    move_forward_button.pack(side=LEFT, padx=5)
+    move_backward_button.pack(side=LEFT, padx=5)
 
-    # Show the playback controls
-    pause_button.pack()
-    move_forward_button.pack()
-    move_backward_button.pack()
-
+    controls_frame.pack(pady=10)  # Ensure controls frame is packed after its content
     play_frame()
 
-def switch_to_recording_controls():
-    # Hide playback controls
-    pause_button.pack_forget()
-    move_forward_button.pack_forget()
-    move_backward_button.pack_forget()
-
-    # Show recording controls
-    recording_button.pack()
-    play_button.pack()
-
-def get_rgb_values(event):
-    global vid_frame, live_preview
-    x, y = event.x, event.y
-    if not live_preview and vid_frame is not None:
-        if x < vid_frame.shape[1] and y < vid_frame.shape[0]:
-            rgb = vid_frame[y, x]
-            rgb_label.config(text="RGB: {}".format(rgb))
-        else:
-            rgb_label.config(text="RGB: Out of bounds")
 
 def toggle_recording():
     global recording_state
@@ -113,44 +140,20 @@ def toggle_recording():
     else:
         recording_button.config(text="Start Recording")
 
-def move_frame_forward():
-    global cap, vid_frame, frame_cache
-    if cap is not None and is_paused:
-        ret, vid_frame = cap.read()
-        if ret:
-            frame_cache.append(vid_frame)
-            show_frame(vid_frame)
-        else:
-            print("Reached the end of the video")
-
-def move_frame_backward():
-    global vid_frame, frame_cache
-    if frame_cache:
-        vid_frame = frame_cache.pop()
-        show_frame(vid_frame)
-    else:
-        print("Reached the beginning of the video")
-
-# Call the preview_window function to start displaying the video
-preview_window()
-
-# Bind the mouse motion event to get_rgb_values function:
-video_source.bind('<Motion>', get_rgb_values)
+video_source.bind('<Motion>', lambda e: update_rgb_values(e.x, e.y))
 
 # UI Buttons
-recording_button = Button(app, text='Start Recording', command=toggle_recording)
-recording_button.pack()
+recording_button = Button(controls_frame, text='Start Recording', command=toggle_recording)
+recording_button.pack(side=LEFT, padx=5)
 
-play_button = Button(app, text='Play Video', command=play_video)
-play_button.pack()
+play_button = Button(controls_frame, text='Play Video', command=play_video)
+play_button.pack(side=LEFT, padx=5)
 
-pause_button = Button(app, text='Pause Playback', command=pause_playback)
-# Don't pack it initially
+pause_button = Button(controls_frame, text='Pause Playback', command=pause_playback)
+move_forward_button = Button(controls_frame, text='Move Frame Forward', command=move_frame_forward)
+move_backward_button = Button(controls_frame, text='Move Frame Backward', command=move_frame_backward)
 
-move_forward_button = Button(app, text='Move Frame Forward', command=move_frame_forward)
-# Don't pack it initially
-
-move_backward_button = Button(app, text='Move Frame Backward', command=move_frame_backward)
-# Don't pack it initially
+# Start the preview
+preview_window()
 
 app.mainloop()
