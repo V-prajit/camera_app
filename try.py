@@ -52,8 +52,8 @@ def play_frame():
             show_frame(vid_frame)
             app.after(1000 // framerate, play_frame)
         else:
+            switch_to_recording_controls()
             cap.release()
-            recording_button.config(text="Start Recording")
 
 def pause_playback():
     global is_paused
@@ -73,8 +73,27 @@ def play_video():
     recording_state = False
     live_preview = False
     frame_cache = []
-    recording_button.config(text="Start Recording")
+
+    # Hide the recording controls
+    recording_button.pack_forget()
+    play_button.pack_forget()
+
+    # Show the playback controls
+    pause_button.pack()
+    move_forward_button.pack()
+    move_backward_button.pack()
+
     play_frame()
+
+def switch_to_recording_controls():
+    # Hide playback controls
+    pause_button.pack_forget()
+    move_forward_button.pack_forget()
+    move_backward_button.pack_forget()
+
+    # Show recording controls
+    recording_button.pack()
+    play_button.pack()
 
 def get_rgb_values(event):
     global vid_frame, live_preview
@@ -122,16 +141,16 @@ video_source.bind('<Motion>', get_rgb_values)
 recording_button = Button(app, text='Start Recording', command=toggle_recording)
 recording_button.pack()
 
-pause_button = Button(app, text='Pause Playback', command=pause_playback)
-pause_button.pack()
-
 play_button = Button(app, text='Play Video', command=play_video)
 play_button.pack()
 
+pause_button = Button(app, text='Pause Playback', command=pause_playback)
+# Don't pack it initially
+
 move_forward_button = Button(app, text='Move Frame Forward', command=move_frame_forward)
-move_forward_button.pack()
+# Don't pack it initially
 
 move_backward_button = Button(app, text='Move Frame Backward', command=move_frame_backward)
-move_backward_button.pack()
+# Don't pack it initially
 
 app.mainloop()
