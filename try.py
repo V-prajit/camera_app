@@ -11,6 +11,7 @@ cam_width = int(cam.get(3))
 cam_height = int(cam.get(4))
 framerate = 60
 write_video = cv2.VideoWriter("output.avi", cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), framerate, (cam_width, cam_height))
+current_frame_num = 0
 
 recording_state = False
 is_paused = False
@@ -25,9 +26,16 @@ video_source.pack(pady=10)
 controls_frame = Frame(app)
 controls_frame.pack(pady=10)
 
+frame_counter_label = Label(app, text="Frame: 0")
+
+
 rgb_label = Label(app)
 
-def show_frame(frame):
+def show_frame(frame, increment=True):
+    global current_frame_num
+    if not live_preview and increment:
+        current_frame_num += 1
+    frame_counter_label.config(text=f"Frame: {current_frame_num}")
     convert_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     current_image = Image.fromarray(convert_color)
     imgtk = ImageTk.PhotoImage(image=current_image)
@@ -43,27 +51,41 @@ def update_rgb_values(x, y):
             rgb_label.config(text="RGB: Out of bounds")
 
 def move_frame_forward():
-    global vid_frame, frame_cache
+    global vid_frame, current_frame_num, cap
     if cap is not None and is_paused:
         ret, vid_frame = cap.read()
-        if ret:
-            frame_cache.append(vid_frame)
-            show_frame(vid_frame)
-        else:
+        print("Current frame before decrement:", current_frame_num)
+
+        if not ret:
             reset_to_start()
+            return
+        show_frame(vid_frame)
+
 
 def move_frame_backward():
-    global vid_frame, frame_cache
-    if frame_cache:
-        vid_frame = frame_cache.pop(-2)  # get the previous frame
-        show_frame(vid_frame)
-        if cap is not None:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, cap.get(cv2.CAP_PROP_POS_FRAMES) - 2)
-    else:
-        print("Reached the beginning of the video")
+    global vid_frame, current_frame_num, cap
+    if cap is not None and is_paused:
+        # Go one frame back
+        if current_frame_num > 0:
+            current_frame_num -= 1
+            cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame_num)
+            ret, vid_frame = cap.read()
+            if ret:
+                show_frame(vid_frame, increment=False)
+            else:
+                print("Error reading frame")
+        else:
+            print("Reached the beginning of the video")
+
+
+
+
+
 
 def reset_to_start():
-    global recording_state, is_paused, live_preview, vid_frame, frame_cache, cap
+    global recording_state, is_paused, live_preview, vid_frame, frame_cache, cap, current_frame_num
+    current_frame_num = 0
+    frame_counter_label.config(text=f"Frame: {current_frame_num}")
     recording_state = False
     is_paused = False
     live_preview = True
@@ -122,6 +144,7 @@ def play_video():
     recording_button.pack_forget()
     play_button.pack_forget()
     rgb_label.pack()
+    frame_counter_label.pack()
     
     # Pack the video control buttons here
     pause_button.pack(side=LEFT, padx=5)
