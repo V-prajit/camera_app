@@ -13,6 +13,8 @@ cam_height = int(cam.get(4))
 framerate = 60
 write_video = None
 current_frame_num = 0
+total_frames = 0
+
 
 recording_state = False
 is_paused = False
@@ -31,10 +33,10 @@ frame_counter_label = Label(app, text="Frame: 0")
 rgb_label = Label(app)
 
 def show_frame(frame):
-    global current_frame_num
+    global current_frame_num, total_frames
     if not live_preview:
         current_frame_num += 1
-    frame_counter_label.config(text=f"Frame: {current_frame_num}")
+    frame_counter_label.config(text=f"Frame: {current_frame_num}/{total_frames}")
     convert_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     current_image = Image.fromarray(convert_color)
     imgtk = ImageTk.PhotoImage(image=current_image)
@@ -106,7 +108,7 @@ def pause_playback():
         play_frame()
 
 def play_video():
-    global cap, recording_state, live_preview, frame_cache, write_video
+    global cap, recording_state, live_preview, frame_cache, write_video, total_frames
     if cam.isOpened():
         cam.release()
     if write_video and write_video.isOpened():
@@ -116,6 +118,8 @@ def play_video():
         print("Error: output.mp4 doesn't exist!")
         return
     cap = cv2.VideoCapture('output.mp4')
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # Get total number of frames
+
     recording_state = False
     live_preview = False
     frame_cache = []
