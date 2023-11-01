@@ -1,137 +1,164 @@
 from tkinter import *
 import cv2
 from PIL import Image, ImageTk
-import threading
+import os
 
-# set the camera and its values up
-cam = cv2.VideoCapture(0)
-frame_width = int(cam.get(3))
-frame_height = int(cam.get(4))
-framerate = 60  # Set the frame rate for recording and playback (in frames per second)
-
-# Initialize video writer
-out = cv2.VideoWriter('outpy.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), framerate, (frame_width, frame_height))
-
-# setting the base window
 app = Tk()
 app.bind('<Escape>', lambda e: app.quit())
 
-# place the video feed into tkinter video
-vid_src = Label(app)
-vid_src.pack()
-
-frame_count_label = Label(app, text="Frame: 0")
-frame_count_label.pack()
-
-rgb_label = Label(app, text="RGB: ")
-rgb_label.pack()
-
-global recording_state, paused, next_or_prev_frame
+# Global variables and states
+cam = cv2.VideoCapture(0)
+cam_width = int(cam.get(3))
+cam_height = int(cam.get(4))
+framerate = 60
+write_video = None
+current_frame_num = 0
+total_frames = 0
+cap = None
+vid_frame = None
 recording_state = False
-paused = False
-next_or_prev_frame = None
+is_paused = False
+live_preview = True
 
-total_frames = 0  # Variable to keep track of the total frames recorded
+# Labels for the Tkinter App
+video_source = Label(app)
+video_source.pack(pady=10)
 
-# functions to perform actions
-# open the camera preview upon opening the application
-def open_camera():
-    global recording_state, paused, total_frames
+controls_frame = Frame(app)
+controls_frame.pack(pady=10)
+
+frame_counter_label = Label(app, text="Frame: 0")
+rgb_label = Label(app)
+
+
+def show_frame(frame):
+    global current_frame_num, total_frames
+    if not live_preview:
+        current_frame_num += 1
+    frame_counter_label.config(text=f"Frame: {current_frame_num}/{total_frames}")
+    convert_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+    current_image = Image.fromarray(convert_color)
+    imgtk = ImageTk.PhotoImage(image=current_image)
+    video_source.config(image=imgtk)
+    video_source.imgtk = imgtk
+
+def update_rgb_values(x, y):
+    if vid_frame is not None:
+        if 0 <= x < vid_frame.shape[1] and 0 <= y < vid_frame.shape[0]:
+            rgb = vid_frame[y, x]
+            rgb_label.config(text="RGB: {}".format(rgb))
+        else:
+            rgb_label.config(text="RGB: Out of bounds")
+
+def move_frame_forward():
+    global vid_frame, current_frame_num, cap
+    if cap is not None and is_paused:
+        ret, vid_frame = cap.read()
+        if not ret:
+            return
+        show_frame(vid_frame)
+
+def move_frame_backward():
+    global vid_frame, current_frame_num, cap
+    frame_that_is_playing = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+    if cap is not None and is_paused:
+        if frame_that_is_playing > 0:
+            frame_that_is_playing -= 2
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_that_is_playing) 
+            ret, vid_frame = cap.read()  
+            if ret:
+                current_frame_num -= 2
+                show_frame(vid_frame)
+            else:
+                print("Error reading frame")
+        else:
+            print("Reached the beginning of the video")
+    else:
+        print("the video is not found")
+
+def preview_window():
+    global live_preview
     _, frame = cam.read()
-    frame = cv2.resize(frame, (frame_width, frame_height))
+    show_frame(frame)
 
-    c_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-    cur_frame = Image.fromarray(c_image)
-    photo_cur_frame = ImageTk.PhotoImage(image=cur_frame)
-    vid_src.photo_image = photo_cur_frame
-    vid_src.configure(image=photo_cur_frame)
+    if recording_state and not is_paused:
+        write_video.write(frame)
 
-    vid_src.bind("<Motion>", get_rgb_values)
+    app.after(1000 // framerate, preview_window)
 
-    if recording_state and not paused:
-        out.write(frame)  # Write frame to video file
-        total_frames += 1  # Increase the total frames recorded
-    vid_src.after(1000 // framerate, open_camera)  # Use the specified frame rate for capturing frames
+def play_frame():
+    global cap, vid_frame
+    if cap is not None and not is_paused:
+        ret, vid_frame = cap.read()
+        if ret:
+            show_frame(vid_frame)
+            app.after(1000 // framerate, play_frame)
+        else:
+            cap.release()
+            recording_button.config(text="Start Recording")
 
-def get_rgb_values(event):
-    x, y = event.x, event.y  # Get the coordinates of the mouse cursor
-    frame = cv2.cvtColor(cam.read()[1], cv2.COLOR_BGR2RGB)  # Read the current frame
-    rgb = frame[y, x]  # Get the RGB values at the cursor position
-    rgb_label.config(text="RGB: {}".format(rgb))
+def pause_playback():
+    global is_paused
+    is_paused = not is_paused
+    if is_paused:
+        pause_button.config(text="Resume Playback")
+    else:
+        pause_button.config(text="Pause Playback")
+        play_frame()
 
 def play_video():
-    global paused, next_or_prev_frame, total_frames
-    global current_frame
-    current_frame = 0
+    global cap, recording_state, live_preview, write_video, total_frames
+    if cam.isOpened():
+        cam.release()
+    if write_video and write_video.isOpened():
+        write_video.release()
 
-    cap = cv2.VideoCapture('outpy.avi')
+    if not os.path.exists('output.mp4'):
+        print("Error: output.mp4 doesn't exist!")
+        return
+    cap = cv2.VideoCapture('output.mp4')
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) 
 
-    while True:
-        if not paused or (paused and next_or_prev_frame is not None):
-            if next_or_prev_frame == "next":
-                current_frame += 1
-            elif next_or_prev_frame == "prev":
-                current_frame -= 1
+    recording_state = False
+    live_preview = False
 
-            # Ensure the current_frame stays within the valid range
-            current_frame = max(0, min(total_frames - 1, current_frame))
+    recording_button.pack_forget()
+    play_button.pack_forget()
+    rgb_label.pack()
+    frame_counter_label.pack()
 
-            cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
-            ret, frame = cap.read()
+    # Pack the video control buttons here
+    pause_button.pack(side=LEFT, padx=5)
+    move_forward_button.pack(side=LEFT, padx=5)
+    move_backward_button.pack(side=LEFT, padx=5)
 
-            if not ret:
-                break
+    controls_frame.pack(pady=10) 
+    play_frame()
 
-            frame_count_label.config(text="Frame: {}".format(current_frame))
-
-            next_or_prev_frame = None
-
-        cv2.imshow('Recorded Video', frame)
-
-        if cv2.waitKey(1000 // framerate) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-# ... (rest of your code remains the same)
-
-def pause_resume_video():
-    global paused
-    paused = not paused
-
-def next_frame():
-    global next_or_prev_frame
-    next_or_prev_frame = "next"
-
-def prev_frame():
-    global next_or_prev_frame
-    next_or_prev_frame = "prev"
-
-# state of the recording button, and having it start and stop writing to a file
 def toggle_recording():
-    global recording_state
+    global recording_state, write_video
     recording_state = not recording_state
     if recording_state:
-        rec_button.configure(text="Stop Recording")
+        recording_button.config(text="Stop Recording")
+        write_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), framerate, (cam_width, cam_height))
     else:
-        rec_button.configure(text="Start Recording")
+        recording_button.config(text="Start Recording")
+        write_video.release()
 
-rec_button = Button(app, text='Start Recording', command=toggle_recording)
-rec_button.pack()
+video_source.bind('<Motion>', lambda e: update_rgb_values(e.x, e.y))
 
-play_button = Button(app, text='Play Recorded Video', command=lambda: threading.Thread(target=play_video).start())
-play_button.pack()
+# UI Buttons
+recording_button = Button(controls_frame, text='Start Recording', command=toggle_recording)
+recording_button.pack(side=LEFT, padx=5)
 
-pause_resume_button = Button(app, text='Pause/Resume Video', command=pause_resume_video)
-pause_resume_button.pack()
+play_button = Button(controls_frame, text='Play Video', command=play_video)
+play_button.pack(side=LEFT, padx=5)
 
-forward_button = Button(app, text='Move Forward', command=next_frame)
-forward_button.pack()
+pause_button = Button(controls_frame, text='Pause Playback', command=pause_playback)
+move_forward_button = Button(controls_frame, text='Move Frame Forward', command=move_frame_forward)
+move_backward_button = Button(controls_frame, text='Move Frame Backward', command=move_frame_backward)
 
-backward_button = Button(app, text='Move Backward', command=prev_frame)
-backward_button.pack()
+# Start the preview
+preview_window()
 
-# random comment
-app.after(1, open_camera)
 app.mainloop()
