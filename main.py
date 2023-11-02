@@ -147,7 +147,7 @@ def toggle_recording():
 
 video_source.bind('<Motion>', lambda e: update_rgb_values(e.x, e.y))
 
-# UI Buttons
+#Buttons
 recording_button = Button(controls_frame, text='Start Recording', command=toggle_recording)
 recording_button.pack(side=LEFT, padx=5)
 
