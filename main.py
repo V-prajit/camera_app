@@ -10,7 +10,7 @@ app.bind('<Escape>', lambda e: app.quit())
 cam = cv2.VideoCapture(0)
 cam_width = int(cam.get(3))
 cam_height = int(cam.get(4))
-framerate = 60
+framerate = 30
 write_video = None
 current_frame_num = 0
 total_frames = 0
@@ -19,6 +19,8 @@ vid_frame = None
 recording_state = False
 is_paused = False
 live_preview = True
+last_mouse_x = 0
+last_mouse_y = 0
 
 # Labels for the Tkinter App
 video_source = Label(app)
@@ -32,7 +34,7 @@ rgb_label = Label(app)
 
 
 def show_frame(frame):
-    global current_frame_num, total_frames
+    global current_frame_num, total_frames, vid_frame
     if not live_preview:
         current_frame_num += 1
     frame_counter_label.config(text=f"Frame: {current_frame_num}/{total_frames}")
@@ -41,11 +43,31 @@ def show_frame(frame):
     imgtk = ImageTk.PhotoImage(image=current_image)
     video_source.config(image=imgtk)
     video_source.imgtk = imgtk
+    vid_frame = frame
+    update_rgb_values()
 
-def update_rgb_values(x, y):
+def on_mouse_move(e):
+    global last_mouse_x, last_mouse_y
+    last_mouse_x, last_mouse_y = e.x, e.y
+    update_rgb_values()
+
+video_source.bind('<Motion>', on_mouse_move)
+
+def update_rgb_values():
+    global vid_frame, last_mouse_x, last_mouse_y, video_source
     if vid_frame is not None:
-        if 0 <= x < vid_frame.shape[1] and 0 <= y < vid_frame.shape[0]:
-            rgb = vid_frame[y, x]
+        # Scale the last known mouse position to the frame resolution
+        label_w = video_source.winfo_width()
+        label_h = video_source.winfo_height()
+        frame_w = vid_frame.shape[1]
+        frame_h = vid_frame.shape[0]
+        x_scale = frame_w / label_w
+        y_scale = frame_h / label_h
+        x = int(last_mouse_x * x_scale)
+        y = int(last_mouse_y * y_scale)
+        if 0 <= x < frame_w and 0 <= y < frame_h:
+            b, g, r = vid_frame[y, x]
+            rgb = (r, g, b)
             rgb_label.config(text="RGB: {}".format(rgb))
         else:
             rgb_label.config(text="RGB: Out of bounds")
@@ -85,6 +107,7 @@ def preview_window():
         write_video.write(frame)
 
     app.after(1000 // framerate, preview_window)
+
 
 def play_frame():
     global cap, vid_frame
@@ -126,6 +149,8 @@ def play_video():
     play_button.pack_forget()
     rgb_label.pack()
     frame_counter_label.pack()
+    rgb_label.pack()
+
 
     # Pack the video control buttons here
     pause_button.pack(side=LEFT, padx=5)
@@ -145,7 +170,17 @@ def toggle_recording():
         recording_button.config(text="Start Recording")
         write_video.release()
 
-video_source.bind('<Motion>', lambda e: update_rgb_values(e.x, e.y))
+
+def pause_playback(event=None):  # Add event=None to allow the function to be called from a key bind
+    global is_paused
+    is_paused = not is_paused
+    if is_paused:
+        pause_button.config(text="Resume Playback")
+    else:
+        pause_button.config(text="Pause Playback")
+        play_frame()
+
+app.bind('<space>', pause_playback)
 
 #Buttons
 recording_button = Button(controls_frame, text='Start Recording', command=toggle_recording)
