@@ -2,6 +2,8 @@ from tkinter import *
 import cv2
 from PIL import Image, ImageTk
 import os
+from tkinter import filedialog
+
 
 app = Tk()
 app.bind('<Escape>', lambda e: app.quit())
@@ -32,6 +34,12 @@ controls_frame.pack(pady=10)
 frame_counter_label = Label(app, text="Frame: 0")
 rgb_label = Label(app)
 
+
+filename_label = Label(controls_frame, text="Filename:")
+filename_label.pack(side=LEFT, padx=5)
+filename_entry = Entry(controls_frame, width=20)
+filename_entry.pack(side=LEFT, padx=5)
+filename_entry.insert(0, "output.mp4")
 
 def show_frame(frame):
     global current_frame_num, total_frames, vid_frame
@@ -136,10 +144,19 @@ def play_video():
     if write_video and write_video.isOpened():
         write_video.release()
 
-    if not os.path.exists('output.mp4'):
-        print("Error: output.mp4 doesn't exist!")
+    current_script_dir = os.path.dirname(os.path.realpath(__file__))
+
+    video_path = filedialog.askopenfilename(initialdir=current_script_dir, title="Select Video File", 
+                                            filetypes=[("MP4 Files", "*.mp4"), ("All Files", "*.*")])
+
+    if not video_path:
+        print("No file selected!")
         return
-    cap = cv2.VideoCapture('output.mp4')
+
+    if not os.path.exists(video_path):
+        print("Error: File doesn't exist!")
+        return
+    cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) 
 
     recording_state = False
@@ -165,7 +182,10 @@ def toggle_recording():
     recording_state = not recording_state
     if recording_state:
         recording_button.config(text="Stop Recording")
-        write_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), framerate, (cam_width, cam_height))
+        filename = filename_entry.get()
+        if not filename.endswith('.mp4'):
+            filename += '.mp4'
+        write_video = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), framerate, (cam_width, cam_height))
     else:
         recording_button.config(text="Start Recording")
         write_video.release()
