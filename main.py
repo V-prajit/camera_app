@@ -3,7 +3,9 @@ import cv2
 from PIL import Image, ImageTk
 import os
 from tkinter import filedialog
-
+import mediapipe as mp
+import numpy as np
+from arm_detection import process_pose
 
 app = Tk()
 app.bind('<Escape>', lambda e: app.quit())
@@ -46,7 +48,10 @@ def show_frame(frame):
     if not live_preview:
         current_frame_num += 1
     frame_counter_label.config(text=f"Frame: {current_frame_num}/{total_frames}")
-    convert_color = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+    
+    processed_frame, l_angle, r_angle = process_pose(frame)
+
+    convert_color = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGBA)
     current_image = Image.fromarray(convert_color)
     imgtk = ImageTk.PhotoImage(image=current_image)
     video_source.config(image=imgtk)
