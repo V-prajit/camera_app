@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check if Python 3 is installed
-if ! command -v python3 &> /dev/null; then
-    echo "Python 3 is not installed. Installing Python 3..."
+if ! command -v python3.9 &> /dev/null; then
+    echo "Python 3.9 is not installed. Installing Python 3..."
 
     # Check if Homebrew is installed
     if ! command -v brew &> /dev/null; then
@@ -14,11 +14,20 @@ if ! command -v python3 &> /dev/null; then
             echo "Failed to install Homebrew."
             exit 1
         fi
+
+        # Source the profile to include Homebrew in PATH
+        if [ -f "$HOME/.bash_profile" ]; then
+            source "$HOME/.bash_profile"
+        elif [ -f "$HOME/.bashrc" ]; then
+            source "$HOME/.bashrc"
+        elif [ -f "$HOME/.profile" ]; then
+            source "$HOME/.profile"
+        fi
     fi
 
     # Install Python 3 using Homebrew
     echo "Installing Python 3 using Homebrew..."
-    brew install python3
+    brew install python@3.9
     if [ $? -ne 0 ]; then
         echo "Failed to install Python 3."
         exit 1

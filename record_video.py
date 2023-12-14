@@ -1,7 +1,5 @@
 from tkinter import *
 import cv2
-import os
-from tkinter import filedialog
 from PIL import Image, ImageTk
 
 app = Tk()
@@ -15,10 +13,8 @@ framerate = 30
 write_video = None
 recording_state = False
 
-# Labels for the Tkinter App
 video_source = Label(app)
 video_source.pack(pady = 10)
-
 controls_frame = Frame(app)
 controls_frame.pack(pady=10)
 
