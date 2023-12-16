@@ -1,8 +1,21 @@
 #!/bin/bash
 
-# Check if Git is installed
-if ! command -v git &> /dev/null; then
-    echo "Git is not installed. Installing Git..."
+# Download the camera_app repository as a ZIP file
+echo "Downloading the camera_app repository as a ZIP..."
+curl -L https://github.com/V-prajit/camera_app/archive/refs/heads/main.zip -o camera_app.zip
+
+# Unzip the repository
+echo "Unzipping the repository..."
+unzip camera_app.zip
+if [ $? -ne 0 ]; then
+    echo "Failed to unzip the camera_app repository."
+    exit 1
+fi
+echo "The camera_app repository has been successfully unzipped."
+
+# Check if Python 3.9 is installed
+if ! command -v python3.9 &> /dev/null; then
+    echo "Python 3.9 is not installed. Installing Python 3..."
 
     # Check if Homebrew is installed
     if ! command -v brew &> /dev/null; then
@@ -20,33 +33,7 @@ if ! command -v git &> /dev/null; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
 
-    # Install Git using Homebrew
-    echo "Installing Git using Homebrew..."
-    brew install git
-    if [ $? -ne 0 ]; then
-        echo "Failed to install Git."
-        exit 1
-    fi
-
-    echo "Git has been successfully installed."
-else 
-    echo "Git is already installed."
-fi
-
-# Clone the repository
-echo "Cloning the camera_app repository..."
-git clone https://github.com/V-prajit/camera_app.git
-if [ $? -ne 0 ]; then
-    echo "Failed to clone the camera_app repository."
-    exit 1
-fi
-echo "The camera_app repository has been successfully cloned."
-
-# Check if Python 3.9 is installed
-if ! command -v python3.9 &> /dev/null; then
-    echo "Python 3.9 is not installed. Installing Python 3..."
-
-    # Install Python 3 using Homebrew (Homebrew is already checked above)
+    # Install Python 3 using Homebrew
     echo "Installing Python 3 using Homebrew..."
     brew install python@3.9
     if [ $? -ne 0 ]; then
