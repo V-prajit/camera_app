@@ -20,7 +20,7 @@ else
 fi
 
 sudo apt-get update
-sudo apt-get install python3-pip
+sudo apt-get install -y python3-pip
 if [ $? -ne 0 ]; then
     echo "Failed to upgrade Pillow."
     exit 1
@@ -30,7 +30,7 @@ fi
 python3.11 -m tkinter --version &> /dev/null
 if [ $? -ne 0 ]; then
     echo "Tkinter is not installed. Installing Tkinter..."
-    sudo apt-get install python-tk 
+    sudo apt-get install -y python-tk 
     if [ $? -ne 0 ]; then
         echo "Failed to install Tkinter."
         exit 1
@@ -54,7 +54,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-sudo apt install python3-tk
+sudo apt install -y python3-tk
 if [$? -ne 0 ]; then
 	echo "Failed to install Tkinter"
 	exit 1
