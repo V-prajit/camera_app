@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# Install Git
+echo "Installing Git..."
+sudo apt-get update
+sudo apt-get install -y git
+if [ $? -ne 0 ]; then
+    echo "Failed to install Git."
+    exit 1
+fi
+echo "Git successfully installed."
+
+# Clone the GitHub repository
+echo "Cloning the camera_app repository..."
+git clone https://github.com/V-prajit/camera_app.git
+if [ $? -ne 0 ]; then
+    echo "Failed to clone the camera_app repository."
+    exit 1
+fi
+echo "Repository cloned successfully."
+
 # Check if Python 3.11 is installed
 if ! command -v python3.11 &> /dev/null; then
     echo "Python 3.11 is not installed. Installing Python 3.11..."
@@ -55,11 +74,10 @@ if [ $? -ne 0 ]; then
 fi
 
 sudo apt install -y python3-tk
-if [$? -ne 0 ]; then
-	echo "Failed to install Tkinter"
-	exit 1
+if [ $? -ne 0 ]; then
+    echo "Failed to install Tkinter."
+    exit 1
 fi
-
 
 echo "All required Python packages have been successfully installed."
 
