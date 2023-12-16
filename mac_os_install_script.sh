@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Check if Python 3 is installed
-if ! command -v python3.9 &> /dev/null; then
-    echo "Python 3.9 is not installed. Installing Python 3..."
+# Check if Git is installed
+if ! command -v git &> /dev/null; then
+    echo "Git is not installed. Installing Git..."
 
     # Check if Homebrew is installed
     if ! command -v brew &> /dev/null; then
@@ -20,7 +20,33 @@ if ! command -v python3.9 &> /dev/null; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
 
-    # Install Python 3 using Homebrew
+    # Install Git using Homebrew
+    echo "Installing Git using Homebrew..."
+    brew install git
+    if [ $? -ne 0 ]; then
+        echo "Failed to install Git."
+        exit 1
+    fi
+
+    echo "Git has been successfully installed."
+else 
+    echo "Git is already installed."
+fi
+
+# Clone the repository
+echo "Cloning the camera_app repository..."
+git clone https://github.com/V-prajit/camera_app.git
+if [ $? -ne 0 ]; then
+    echo "Failed to clone the camera_app repository."
+    exit 1
+fi
+echo "The camera_app repository has been successfully cloned."
+
+# Check if Python 3.9 is installed
+if ! command -v python3.9 &> /dev/null; then
+    echo "Python 3.9 is not installed. Installing Python 3..."
+
+    # Install Python 3 using Homebrew (Homebrew is already checked above)
     echo "Installing Python 3 using Homebrew..."
     brew install python@3.9
     if [ $? -ne 0 ]; then
@@ -56,4 +82,4 @@ fi
 
 echo "All required Python packages have been successfully installed."
 
-echo "Try recording your first video by running "python3.9 record_video.py""
+echo "Try recording your first video by running 'python3.9 record_video.py'"
