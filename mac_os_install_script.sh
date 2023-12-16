@@ -15,14 +15,9 @@ if ! command -v python3.9 &> /dev/null; then
             exit 1
         fi
 
-        # Source the profile to include Homebrew in PATH
-        if [ -f "$HOME/.bash_profile" ]; then
-            source "$HOME/.bash_profile"
-        elif [ -f "$HOME/.bashrc" ]; then
-            source "$HOME/.bashrc"
-        elif [ -f "$HOME/.profile" ]; then
-            source "$HOME/.profile"
-        fi
+        # Configure the shell to include Homebrew in PATH
+        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+        eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
 
     # Install Python 3 using Homebrew
@@ -38,3 +33,27 @@ else
     echo "Python 3 is already installed."
 fi
 
+# Check and install Tkinter if necessary
+python3.9 -m tkinter --version &> /dev/null
+if [ $? -ne 0 ]; then
+    echo "Tkinter is not installed. Installing Tkinter..."
+    brew install python-tk@3.9
+    if [ $? -ne 0 ]; then
+        echo "Failed to install Tkinter."
+        exit 1
+    fi
+else 
+    echo "Tkinter is already installed."
+fi
+
+# Install additional Python packages
+echo "Installing additional Python packages..."
+pip3.9 install opencv-python mediapipe Pillow numpy
+if [ $? -ne 0 ]; then
+    echo "Failed to install one or more Python packages."
+    exit 1
+fi
+
+echo "All required Python packages have been successfully installed."
+
+echo "Try recording your first video by running "python3.9 record_video.py""
