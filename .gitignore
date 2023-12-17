@@ -2,3 +2,5 @@ py3.9
 *.avi
 *.mp4
 *.txt
+.idea
+__pycache__
