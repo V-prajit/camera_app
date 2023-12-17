@@ -5,3 +5,5 @@ py3.9
 .idea
 __pycache__
 .DS_Store
+*.m4v
+*.mov
