@@ -12,6 +12,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+cd camera_app-main/
 
 echo "The camera_app repository has been successfully unzipped."
 
