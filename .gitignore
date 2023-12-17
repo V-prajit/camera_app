@@ -4,3 +4,4 @@ py3.9
 *.txt
 .idea
 __pycache__
+.DS_Store
