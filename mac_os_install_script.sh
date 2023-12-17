@@ -11,6 +11,8 @@ if [ $? -ne 0 ]; then
     echo "Failed to unzip the camera_app repository."
     exit 1
 fi
+
+
 echo "The camera_app repository has been successfully unzipped."
 
 # Check if Python 3.9 is installed
@@ -61,7 +63,7 @@ fi
 
 # Install additional Python packages
 echo "Installing additional Python packages..."
-pip3.9 install opencv-python mediapipe Pillow numpy
+pip3 install opencv-python mediapipe Pillow numpy
 if [ $? -ne 0 ]; then
     echo "Failed to install one or more Python packages."
     exit 1
