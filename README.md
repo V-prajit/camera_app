@@ -31,7 +31,8 @@ To download all files and install Python, choose one of the following methods:
 
 #### Manual Installation
 1. Download the GitHub repository as shown in the tutorial video below.
-2. Install Python from [this website](website link) (See Tutorial Video).
+2. Install Python from [https://www.python.org/downloads/](https://www.python.org/downloads/) 
+[See Tutorial Video](https://www.youtube.com/watch?v=oKIjWmoLXOo&ab_channel=MacintoshWeekly).
 3. Install all the dependencies by copy-pasting this code into the terminal:
     ```bash
     pip3 install opencv-python mediapipe Pillow numpy
@@ -41,4 +42,27 @@ To download all files and install Python, choose one of the following methods:
     python3 record_video.py
 
 ### Ubuntu
-(Instructions for Ubuntu users will be added here.)
+To download all files and install Python, choose one of the following methods:
+#### Install Script
+1. Open the Ubuntu terminal and copy-paste the following code: 
+    ```bash
+    bash <(curl -sL https://raw.githubusercontent.com/V-prajit/camera_app/install_scripts/mac_os_install_script.sh)
+    ```
+2. Enter your macOS password into the terminal when prompted.
+3. Press the Enter key when prompted.
+4. To run your first app, open the terminal in the downloaded folder and execute:
+    ```bash
+    python3 record_video.py 
+    ```
+
+#### Manual Installation
+1. Download the GitHub repository as shown in the tutorial video below.
+2. Install Python from [https://www.python.org/downloads/](https://www.python.org/downloads/) 
+[See Tutorial Video](https://www.youtube.com/watch?v=oKIjWmoLXOo&ab_channel=MacintoshWeekly).
+3. Install all the dependencies by copy-pasting this code into the terminal:
+    ```bash
+    pip3 install opencv-python mediapipe Pillow numpy
+    ```
+4. To run your first app, open the terminal in the downloaded folder and execute:
+    ```bash
+    python3 record_video.py
