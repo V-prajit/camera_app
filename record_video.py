@@ -1,6 +1,9 @@
+#import the required libraries
 from tkinter import *
 import cv2
 from PIL import Image, ImageTk
+
+#Setup Tkinter App instance
 
 app = Tk()
 app.bind('<Escape>', lambda e: app.quit())
@@ -13,11 +16,13 @@ framerate = 30
 write_video = None
 recording_state = False
 
+#Packing Of Labels To The Screen
 video_source = Label(app)
 video_source.pack(pady = 10)
 controls_frame = Frame(app)
 controls_frame.pack(pady=10)
 
+#File Selection Prompt 
 filename_label = Label(controls_frame, text="Filename:")
 filename_label.pack(side=LEFT, padx=5)
 filename_entry = Entry(controls_frame, width=20)

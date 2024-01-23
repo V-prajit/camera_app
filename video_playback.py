@@ -1,9 +1,11 @@
+#importing the required libraries
 from tkinter import *
 import cv2
 from PIL import Image, ImageTk
 import os
 from tkinter import filedialog
 
+#Setting Up The Tkinter Instance
 app = Tk()
 app.bind('<Escape>', lambda e: app.quit())
 
